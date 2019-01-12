@@ -33,11 +33,6 @@ AC_PROG_CC
 
 #add various checks here
 
-#check for libsodium
-AC_CHECK_LIB([sodium], [sodium_init], [WC_sodium_flags=-lsodium], [AC_MSG_ERROR([libsodium not found!])])
-
-AC_SUBST(WC_sodium_flags)
-
 # Checks for header files.
 AC_CHECK_HEADERS([string.h])
 

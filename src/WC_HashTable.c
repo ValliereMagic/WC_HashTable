@@ -1,11 +1,26 @@
 #include <stdlib.h>
+#include <stdio.h>
+
+typedef struct table_element {
+
+    //value stored, accessable by key.
+    void* value;
+
+    //number of bytes the value takes up.
+    size_t value_length;
+
+    //key the value is stored under.
+    void* key;
+
+    //number of bytes the key takes up.
+    size_t key_length;
+
+} table_element_t;
 
 typedef struct hash_table {
 
-    //array of void pointers
-    //that point to each element stored
-    //in the table
-    void* table;
+    //array of table elements
+    table_element_t* table;
 
     //the current amount of elements
     //that the table can store at
@@ -31,7 +46,37 @@ typedef struct hash_table {
 //Returns NULL on failure.
 hash_table_t* hash_table_new(void) {
 
-    return NULL;
+    const size_t initial_table_size = 13;
+
+    hash_table_t* new_hash_table = malloc(sizeof(hash_table_t));
+
+    if (new_hash_table == NULL) {
+
+        fprintf(stderr, "Error. System out of memory.\n");
+
+        return NULL;
+    }
+
+    table_element_t* new_table = malloc(sizeof(table_element_t) * initial_table_size);
+
+    if (new_table == NULL) {
+
+        free(new_hash_table);
+
+        fprintf(stderr, "Error. System out of memory.\n");
+
+        return NULL;
+    }
+
+    //initialize the newly allocated table to sane default values.
+
+    new_hash_table->table = new_table;
+
+    new_hash_table->table_capacity = initial_table_size / 2;
+
+    new_hash_table->elements_stored = 0;
+
+    return new_hash_table;
 }
 
 //free a passed hash_table from memory.

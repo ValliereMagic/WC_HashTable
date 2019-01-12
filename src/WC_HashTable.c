@@ -151,7 +151,7 @@ void hash_table_free(hash_table_t* h_table) {
 //Add the passed value to the hash table accessable by the
 //key passed.
 //values and keys will be copied into memory managed by the
-//has table.
+//hash table.
 //function will return 1 on success, 0 on failure.
 unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length,
                              void* value, size_t value_length) {

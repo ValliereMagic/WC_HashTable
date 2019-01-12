@@ -19,8 +19,12 @@ typedef struct table_element {
 
 typedef struct hash_table {
 
+    //takes up deleted spaces in
+    //the hash table.
+    table_element_t deleted;
+
     //array of table elements
-    table_element_t* table;
+    table_element_t** table;
 
     //the current amount of elements
     //that the table can store at
@@ -29,6 +33,10 @@ typedef struct hash_table {
     //of table. table's length must be
     //a prime number.
     size_t table_capacity;
+
+    //actual length of the current table.
+    //useful for freeing the values stored.
+    size_t table_length;
 
     //the number of elements stored in the
     //hash table. Must be less than or
@@ -57,7 +65,7 @@ hash_table_t* hash_table_new(void) {
         return NULL;
     }
 
-    table_element_t* new_table = malloc(sizeof(table_element_t) * initial_table_size);
+    table_element_t** new_table = malloc(sizeof(table_element_t*) * initial_table_size);
 
     if (new_table == NULL) {
 
@@ -68,11 +76,19 @@ hash_table_t* hash_table_new(void) {
         return NULL;
     }
 
+    //initialize all the table elements of the hash table to NULL;
+    for (size_t i = 0; i < initial_table_size; i++) {
+
+        new_table[i] = NULL;
+    }
+
     //initialize the newly allocated table to sane default values.
 
     new_hash_table->table = new_table;
 
     new_hash_table->table_capacity = initial_table_size / 2;
+
+    new_hash_table->table_length = initial_table_size;
 
     new_hash_table->elements_stored = 0;
 
@@ -80,9 +96,56 @@ hash_table_t* hash_table_new(void) {
 }
 
 //free a passed hash_table from memory.
-void hash_table_free(hash_table_t* table) {
+void hash_table_free(hash_table_t* h_table) {
 
-    return;
+    if (h_table == NULL) {
+
+        fprintf(stderr, "Error. Attempting to free a NULL hash table.\n");
+        
+        return;
+    }
+
+    //pull the pointer to the start of the table out of h_table
+    table_element_t** table = h_table->table;
+
+    if (table == NULL) {
+
+        free(h_table);
+
+        fprintf(stderr, "Error. Hashtable is corrupt.");
+
+        return;
+    }
+
+    //pull the memory address of the deleted dummy element
+    //out of h_table.
+    table_element_t* deleted = &h_table->deleted;
+
+    //go through each element in the hash table, and
+    //free every used element (not deleted or NULL)
+    for (size_t i = 0; i < h_table->table_length; i++) {
+
+        table_element_t* current = table[i];
+
+        if (current != deleted && current != NULL) {
+            
+            free(current->value);
+
+            free(current->key);
+
+            free(current);
+
+            table[i] = deleted;
+        }
+    }
+
+    //free the table stored in the hash table
+    //now that all the allocated elements are freed.
+    free(table);
+
+    //free the hash table itself, now that all of
+    //it's dynamically allocated internals are freed.
+    free(h_table);
 }
 
 //Add the passed value to the hash table accessable by the
@@ -90,7 +153,7 @@ void hash_table_free(hash_table_t* table) {
 //values and keys will be copied into memory managed by the
 //has table.
 //function will return 1 on success, 0 on failure.
-unsigned char hash_table_add(void* key, size_t key_length,
+unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length,
                              void* value, size_t value_length) {
 
     return 0;
@@ -98,14 +161,14 @@ unsigned char hash_table_add(void* key, size_t key_length,
 
 //removes the value stored at the key passed in the hash table
 //returns 1 on success, 0 on failure.
-unsigned char hash_table_remove(void* key, size_t key_length) {
+unsigned char hash_table_remove(hash_table_t* h_table, void* key, size_t key_length) {
 
     return 0;
 }
 
 //returns the value stored at the key passed.
 //will return null if there is nothing stored at the key passed.
-void* hash_table_get(void* key, size_t key_length) {
+void* hash_table_get(hash_table_t* h_table, void* key, size_t key_length) {
 
     return NULL;
 }

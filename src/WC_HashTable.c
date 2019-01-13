@@ -47,6 +47,19 @@ typedef struct hash_table {
 
 /* Private HashTable functions*/
 
+//djb2 hash function
+size_t hash(unsigned char *str, size_t str_len) {
+
+    size_t hash = 5381;
+
+    for (int i = 0; i < str_len; i++) {
+
+        hash = ((hash << 5) + hash) + str[i];
+    }
+
+    return hash;
+}
+
 /* Public HashTable functions */
 
 //Create a new hash table. Returns a

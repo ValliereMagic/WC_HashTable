@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 typedef struct table_element {
@@ -136,6 +137,116 @@ void free_element(table_element_t* element) {
     free(element);
 }
 
+//Calculate the next size of the hash table,
+//by first doubling the current size,
+//then finding the next prime.
+//Return 0 on failure.
+size_t find_next_table_length(hash_table_t* h_table) {
+
+    //Make sure that the passed table actually exists.
+    if (h_table == NULL) {
+
+        return 0;
+    }
+
+    //Retrieve the current length of the hash table passed.
+    size_t current_table_length = h_table->table_length;
+
+    //Calculate the new resized table length by doubling
+    //the current length.
+    size_t new_table_length = current_table_length * 2;
+
+    //Truth value for whether the new table length is prime.
+    unsigned char length_is_prime;
+
+    //Increment new_table_length until it is prime
+    do {
+        
+        //check whether new_table_length is prime.
+        length_is_prime = 1;
+
+        size_t loop_delim = sqrt(new_table_length);
+        
+        for (size_t i = 2; i < loop_delim; i++) {
+            
+            if (new_table_length % i == 0) {
+                
+                length_is_prime = 0;
+
+                new_table_length += 1;
+            }
+        }
+    
+    } while (length_is_prime == 0);
+
+    return new_table_length;
+}
+
+//forward declare add function for use in rehash
+unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length,
+                             void* value, size_t value_length);
+
+//Double the size of the table, and add all the elements from the old table
+//to the new one.
+void resize_and_rehash_table(hash_table_t* h_table) {
+
+    size_t next_table_length = find_next_table_length(h_table);
+
+    printf("New table size: %ld\n", next_table_length);
+
+    //make sure that the hash table passed exists.
+    if (next_table_length == 0) {
+
+        return;
+    }
+
+    table_element_t** prev_table = h_table->table;
+
+    //make sure the previous table exists.
+    if (prev_table == NULL) {
+
+        return;
+    }
+
+    //copy out previous hash table
+    size_t table_previous_length = h_table->table_length;
+
+    table_element_t* temp_table[table_previous_length];
+
+    //Copy all the values from the previous table
+    //into the temporary table.
+    memcpy(temp_table, prev_table, table_previous_length);
+
+    //reallocate the table to the new size.
+    h_table->table = realloc(prev_table, sizeof(table_element_t*) * next_table_length);
+
+    //Update the lengths in the h_table structure.
+    h_table->table_capacity = next_table_length / 2;
+
+    h_table->table_length = next_table_length;
+
+    h_table->elements_stored = 0;
+
+    
+
+    //Add all the current elements to the newly reallocated table.
+    table_element_t* deleted = &h_table->deleted;
+
+    for (int i = 0; i < table_previous_length; i++) {
+
+        table_element_t* current = temp_table[i];
+
+        if (current != deleted && current != NULL) {
+            
+            //This will cause a memory leak...
+            //Need to refactor add into 2 pieces, one for allocating
+            //and one for adding the actual element.
+            hash_table_add(h_table, current->key, current->key_length,
+                           current->value, current->value_length);
+        }
+    }
+}
+
 /* Public HashTable functions */
 
 //Create a new hash table. Returns a
@@ -247,13 +358,11 @@ unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length
         return 0;
     }
 
-    //check if hash table is at capacity
-
+    //check if hash table is at capacity, and if it is,
+    //double its size before adding the next element.
     if (h_table->elements_stored >= h_table->table_capacity) {
 
-        //TODO RESIZE AND REHASH TABLE
-
-        return 0;
+        resize_and_rehash_table(h_table);
     }
 
     size_t table_length = h_table->table_length;

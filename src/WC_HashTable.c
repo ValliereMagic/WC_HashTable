@@ -195,71 +195,68 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
 
         //Double the size of the table, and add all the elements from the old table
         //to the new one.
+        
+        //copy out previous hash table
+        size_t table_previous_length = h_table->table_length;
 
-        //Uses h_table
-        {
-            //copy out previous hash table
-            size_t table_previous_length = h_table->table_length;
+        size_t next_table_length = find_next_table_length(table_previous_length);
 
-            size_t next_table_length = find_next_table_length(table_previous_length);
+        //Pull out the current table from h_table
+        //to be resized.
+        table_element_t** prev_table = h_table->table;
 
-            //Pull out the current table from h_table
-            //to be resized.
-            table_element_t** prev_table = h_table->table;
+        //make sure the previous table exists.
+        if (prev_table == NULL) {
+            
+            fprintf(stderr, "Error. previous table on realloc is NULL.\n");
 
-            //make sure the previous table exists.
-            if (prev_table == NULL) {
+            return 0;
+        }
+
+        //This table holds the values currently stored in
+        //the table, and are re-hashed and re-added
+        //when the table is expanded to its new size.
+        table_element_t* temp_table[table_previous_length];
+
+        //Copy all the values from the previous table
+        //into the temporary table.
+        memcpy(temp_table, prev_table, sizeof(table_element_t*) * table_previous_length);
+
+        //reallocate the table to the new size.
+        table_element_t** new_table = h_table->table = realloc(prev_table, sizeof(table_element_t*) * next_table_length);
+
+        //Make sure the reallocated table still exists.
+        if (new_table == NULL) {
+
+            fprintf(stderr, "Error. hash table is NULL after reallocating in add element.\n");
+
+            return 0;
+        }
+
+        //Initialize all elements in the new table to NULL.
+        for (size_t i = 0; i < next_table_length; i++) {
+
+            new_table[i] = NULL;
+        }
+
+        //Update the lengths in the h_table structure.
+        h_table->table_capacity = next_table_length / 2;
+
+        h_table->table_length = next_table_length;
+
+        h_table->elements_stored = 0;
+
+        //Add back all of the elements stored away in
+        //temp_table to the newly resized table.
+        table_element_t* deleted = &h_table->deleted;
+
+        for (size_t i = 0; i < table_previous_length; i++) {
+
+            table_element_t* current = temp_table[i];
+
+            if (current != deleted && current != NULL) {
                 
-                fprintf(stderr, "Error. previous table on realloc is NULL.\n");
-
-                return 0;
-            }
-
-            //This table holds the values currently stored in
-            //the table, and are re-hashed and re-added
-            //when the table is expanded to its new size.
-            table_element_t* temp_table[table_previous_length];
-
-            //Copy all the values from the previous table
-            //into the temporary table.
-            memcpy(temp_table, prev_table, sizeof(table_element_t*) * table_previous_length);
-
-            //reallocate the table to the new size.
-            table_element_t** new_table = h_table->table = realloc(prev_table, sizeof(table_element_t*) * next_table_length);
-
-            //Make sure the reallocated table still exists.
-            if (new_table == NULL) {
-
-                fprintf(stderr, "Error. hash table is NULL after reallocating in add element.\n");
-
-                return 0;
-            }
-
-            //Initialize all elements in the new table to NULL.
-            for (size_t i = 0; i < next_table_length; i++) {
-
-                new_table[i] = NULL;
-            }
-
-            //Update the lengths in the h_table structure.
-            h_table->table_capacity = next_table_length / 2;
-
-            h_table->table_length = next_table_length;
-
-            h_table->elements_stored = 0;
-
-            //Add back all of the elements stored away in
-            //temp_table to the newly resized table.
-            table_element_t* deleted = &h_table->deleted;
-
-            for (size_t i = 0; i < table_previous_length; i++) {
-
-                table_element_t* current = temp_table[i];
-
-                if (current != deleted && current != NULL) {
-                    
-                    hash_table_add_element(h_table, current);
-                }
+                hash_table_add_element(h_table, current);
             }
         }
     }

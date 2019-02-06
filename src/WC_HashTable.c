@@ -66,7 +66,7 @@ size_t hash(unsigned char *str, size_t str_len) {
 //length of the table.
 size_t wrap_index(size_t index, size_t table_length) {
 
-    return ((table_length - 1) + index) % table_length;
+    return index % table_length;
 }
 
 //allocates a new hash_table element.
@@ -78,6 +78,8 @@ table_element_t* allocate_element(void* value, size_t value_length,
     //make sure that key and value exist.
     if (value == NULL || key == NULL) {
 
+        fprintf(stderr, "Error. value or key passed to allocate element is NULL.\n");
+        
         return NULL;
     }
 
@@ -85,6 +87,8 @@ table_element_t* allocate_element(void* value, size_t value_length,
 
     //System out of memory.
     if (new_element == NULL) {
+        
+        fprintf(stderr, "Error. System out of memory.\n");
 
         return NULL;
     }
@@ -182,69 +186,142 @@ size_t find_next_table_length(hash_table_t* h_table) {
     return new_table_length;
 }
 
-//forward declare add function for use in rehash
-unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length,
-                             void* value, size_t value_length);
+//Add the passed value 
+unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* element) {
 
-//Double the size of the table, and add all the elements from the old table
-//to the new one.
-void resize_and_rehash_table(hash_table_t* h_table) {
+    //Make sure that the passed element to add is not null.
+    if (element == NULL) {
 
-    size_t next_table_length = find_next_table_length(h_table);
+        fprintf(stderr, "Error. element passed in is NULL.\n");
 
-    printf("New table size: %ld\n", next_table_length);
-
-    //make sure that the hash table passed exists.
-    if (next_table_length == 0) {
-
-        return;
+        return 0;
     }
 
-    table_element_t** prev_table = h_table->table;
+    //Make sure that the hash table passed actually exists.
+    if (h_table == NULL) {
 
-    //make sure the previous table exists.
-    if (prev_table == NULL) {
-
-        return;
+        fprintf(stderr, "Error. passed h_table doesn't exist in add.\n");
     }
 
-    //copy out previous hash table
-    size_t table_previous_length = h_table->table_length;
+    //Pull key, value and key_length out of the passed element.
+    void* key = element->key;
 
-    table_element_t* temp_table[table_previous_length];
+    size_t key_length = element->key_length;
 
-    //Copy all the values from the previous table
-    //into the temporary table.
-    memcpy(temp_table, prev_table, table_previous_length);
+    void* value = element->value;
 
-    //reallocate the table to the new size.
-    h_table->table = realloc(prev_table, sizeof(table_element_t*) * next_table_length);
+    //make sure that table, key, and value exist.
+    if (key == NULL || value == NULL || h_table == NULL) {
 
-    //Update the lengths in the h_table structure.
-    h_table->table_capacity = next_table_length / 2;
+        return 0;
+    }
 
-    h_table->table_length = next_table_length;
+    //check if hash table is at capacity, and if it is,
+    //double its size before adding the next element.
+    if (h_table->elements_stored >= h_table->table_capacity) {
 
-    h_table->elements_stored = 0;
+        //Double the size of the table, and add all the elements from the old table
+        //to the new one.
+        {
+            size_t next_table_length = find_next_table_length(h_table);
 
-    
+            printf("New table size: %I64d\n", next_table_length);
 
-    //Add all the current elements to the newly reallocated table.
-    table_element_t* deleted = &h_table->deleted;
+            //make sure that the hash table passed exists.
+            if (next_table_length == 0) {
+                
+                fprintf(stderr, "Error. find next index is 0.\n");
 
-    for (int i = 0; i < table_previous_length; i++) {
+                return 0;
+            }
 
-        table_element_t* current = temp_table[i];
+            table_element_t** prev_table = h_table->table;
 
-        if (current != deleted && current != NULL) {
-            
-            //This will cause a memory leak...
-            //Need to refactor add into 2 pieces, one for allocating
-            //and one for adding the actual element.
-            hash_table_add(h_table, current->key, current->key_length,
-                           current->value, current->value_length);
+            //make sure the previous table exists.
+            if (prev_table == NULL) {
+                
+                fprintf(stderr, "Error. previous table on realloc is NULL.\n");
+
+                return 0;
+            }
+
+            //copy out previous hash table
+            size_t table_previous_length = h_table->table_length;
+
+            table_element_t* temp_table[table_previous_length];
+
+            //Copy all the values from the previous table
+            //into the temporary table.
+            memcpy(temp_table, prev_table, table_previous_length);
+
+            //reallocate the table to the new size.
+            h_table->table = realloc(prev_table, sizeof(table_element_t*) * next_table_length);
+
+            //Update the lengths in the h_table structure.
+            h_table->table_capacity = next_table_length / 2;
+
+            h_table->table_length = next_table_length;
+
+            h_table->elements_stored = 0;
+
+            //Add all the current elements to the newly reallocated table.
+            table_element_t* deleted = &h_table->deleted;
+
+            for (size_t i = 0; i < table_previous_length; i++) {
+
+                table_element_t* current = temp_table[i];
+
+                printf("Current element %x\n", current);
+
+                if (current != deleted && current != NULL) {
+
+                    printf("Seg fault?\n");
+                    
+                    hash_table_add_element(h_table, current);
+                }
+            }
         }
     }
+
+    size_t table_length = h_table->table_length;
+
+    size_t table_index = hash(key, key_length) % table_length;
+
+    size_t wrapped_index = table_index;
+
+    //retrieve the table from the h_table
+    table_element_t** table = h_table->table;
+
+    //retrieve deleted pointer from h_table
+    table_element_t* deleted = &h_table->deleted;
+
+    //Quadratically probe until there is no collision
+    table_element_t* current_element = table[table_index];
+
+    size_t offset = 3;
+    
+    while (current_element != NULL && current_element != deleted) {
+
+        //increment the table index by the offset required
+        //for quadratic probing.
+        table_index += offset;
+
+        wrapped_index = wrap_index(table_index, table_length);
+
+        current_element = table[wrapped_index];
+
+        //increment the offset again for quadratic probing.
+        offset += 2;
+    }
+
+    //add the passed element into the table.
+    table[wrapped_index] = element;
+
+    //Added an element to the table, therefore increment
+    //number of elements stored in table.
+    h_table->elements_stored++;
+
+    return 0;
 }
 
 /* Public HashTable functions */
@@ -352,62 +429,13 @@ void hash_table_free(hash_table_t* h_table) {
 unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length,
                              void* value, size_t value_length) {
     
-    //make sure that table, key, and value exist.
-    if (key == NULL || value == NULL || h_table == NULL) {
-
-        return 0;
-    }
-
-    //check if hash table is at capacity, and if it is,
-    //double its size before adding the next element.
-    if (h_table->elements_stored >= h_table->table_capacity) {
-
-        resize_and_rehash_table(h_table);
-    }
-
-    size_t table_length = h_table->table_length;
-
-    size_t table_index = hash(key, key_length) % table_length;
-
-    size_t wrapped_index = table_index;
-
-    //retrieve the table from the h_table
-    table_element_t** table = h_table->table;
-
-    //retrieve deleted pointer from h_table
-    table_element_t* deleted = &h_table->deleted;
-
-    //Quadratically probe until there is no collision
-    table_element_t* current_element = table[table_index];
-
-    size_t offset = 3;
-    
-    while (current_element != NULL && current_element != deleted) {
-
-        //increment the table index by the offset required
-        //for quadratic probing.
-        table_index += offset;
-
-        wrapped_index = wrap_index(table_index, table_length);
-
-        current_element = table[wrapped_index];
-
-        //increment the offset again for quadratic probing.
-        offset += 2;
-    }
-
     //create a new element containing the passed values.
     table_element_t* new_element = allocate_element(value, value_length,
                                                     key, key_length);
 
-    //add the element into the table.
-    table[wrapped_index] = new_element;
-
-    //Added an element to the table, therefore increment
-    //number of elements stored in table.
-    h_table->elements_stored++;
-
-    return 0;
+    //Use the private function to add the newly allocated element
+    //into the hash table.
+    return hash_table_add_element(h_table, new_element);
 }
 
 //removes the value stored at the key passed in the hash table

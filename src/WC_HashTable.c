@@ -4,18 +4,18 @@
 #include <string.h>
 
 typedef struct table_element {
-
-    //value stored, accessable by key.
-    void* value;
-
-    //number of bytes the value takes up.
-    size_t value_length;
-
+    
     //key the value is stored under.
     void* key;
 
     //number of bytes the key takes up.
     size_t key_length;
+    
+    //value stored, accessable by key.
+    void* value;
+
+    //number of bytes the value takes up.
+    size_t value_length;
 
 } table_element_t;
 
@@ -86,7 +86,6 @@ table_element_t* allocate_element(void* value, size_t value_length,
         return NULL;
     }
 
-
     //key, then value.
     void* key_value_pair[2] = {key, value};
 
@@ -101,6 +100,8 @@ table_element_t* allocate_element(void* value, size_t value_length,
         //System out of memory check.
         if (new_key_value_pair[i] == NULL) {
 
+            fprintf(stderr, "Error. Failed to allocate adequate memory for an element.\n");
+
             if (i == 1) {
 
                 free(new_key_value_pair[0]);
@@ -111,7 +112,6 @@ table_element_t* allocate_element(void* value, size_t value_length,
 
         //copy the bytes into their new container.
         memcpy(new_key_value_pair[i], key_value_pair[i], *key_value_length_pair[i]);
-
     }
 
     new_element->key = new_key_value_pair[0];
@@ -138,18 +138,7 @@ void free_element(table_element_t* element) {
 //by first doubling the current size,
 //then finding the next prime.
 //Return 0 on failure.
-size_t find_next_table_length(hash_table_t* h_table) {
-
-    //Make sure that the passed table actually exists.
-    if (h_table == NULL) {
-
-        fprintf(stderr, "Error. passed hash table is null in find next length.\n");
-
-        return 0;
-    }
-
-    //Retrieve the current length of the hash table passed.
-    size_t current_table_length = h_table->table_length;
+size_t find_next_table_length(size_t current_table_length) {
 
     //Calculate the new resized table length by doubling
     //the current length.
@@ -184,14 +173,6 @@ size_t find_next_table_length(hash_table_t* h_table) {
 //Add the passed value 
 unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* element) {
 
-    //Make sure that the passed element to add is not null.
-    if (element == NULL) {
-
-        fprintf(stderr, "Error. element passed in is NULL.\n");
-
-        return 0;
-    }
-
     //Make sure that the hash table passed actually exists.
     if (h_table == NULL) {
 
@@ -199,18 +180,11 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
 
         return 0;
     }
+    
+    //Make sure that the passed element to add is not null.
+    if (element == NULL) {
 
-    //Pull key, value and key_length out of the passed element.
-    void* key = element->key;
-
-    size_t key_length = element->key_length;
-
-    void* value = element->value;
-
-    //make sure that table, key, and value exist.
-    if (key == NULL || value == NULL || h_table == NULL) {
-
-        fprintf(stderr, "Error. h_table, key, or value is NULL in add_element.\n");
+        fprintf(stderr, "Error. element passed in is NULL.\n");
 
         return 0;
     }
@@ -224,16 +198,13 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
 
         //Uses h_table
         {
-            size_t next_table_length = find_next_table_length(h_table);
+            //copy out previous hash table
+            size_t table_previous_length = h_table->table_length;
 
-            //make sure that the hash table passed exists.
-            if (next_table_length == 0) {
-                
-                fprintf(stderr, "Error. find next index is 0.\n");
+            size_t next_table_length = find_next_table_length(table_previous_length);
 
-                return 0;
-            }
-
+            //Pull out the current table from h_table
+            //to be resized.
             table_element_t** prev_table = h_table->table;
 
             //make sure the previous table exists.
@@ -244,9 +215,9 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
                 return 0;
             }
 
-            //copy out previous hash table
-            size_t table_previous_length = h_table->table_length;
-
+            //This table holds the values currently stored in
+            //the table, and are re-hashed and re-added
+            //when the table is expanded to its new size.
             table_element_t* temp_table[table_previous_length];
 
             //Copy all the values from the previous table
@@ -293,10 +264,29 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         }
     }
 
+    //Pull key and key_length out of the passed element.
+    void* key = element->key;
+
+    size_t key_length = element->key_length;
+
+    //make sure that key exists.
+    if (key == NULL) {
+
+        fprintf(stderr, "Error. key is NULL in add_element.\n");
+
+        return 0;
+    }
+
+    //Pulls the current table length out of the hash table.
     size_t table_length = h_table->table_length;
 
+    //Find the index at which to store the new element
+    //by hashing it's key, and fitting it within the
+    //bounds of the table.
     size_t table_index = hash(key, key_length) % table_length;
 
+    //Stores the new wrapped index, that is updated
+    //while resolving collisions.
     size_t wrapped_index = table_index;
 
     //retrieve the table from the h_table
@@ -308,8 +298,9 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
     //Quadratically probe until there is no collision
     table_element_t* current_element = table[table_index];
 
-    size_t offset = 3;
+    size_t offset = 1;
     
+    //Will only enter loop on a collision.
     while (current_element != NULL && current_element != deleted) {
 
         //increment the table index by the offset required
@@ -317,8 +308,6 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         table_index += offset;
 
         wrapped_index = table_index % table_length;
-
-        printf("Wrapped index: %I64d\n", wrapped_index);
 
         current_element = table[wrapped_index];
 
@@ -372,7 +361,6 @@ hash_table_t* hash_table_new(void) {
     }
 
     //initialize the newly allocated table to sane default values.
-
     new_hash_table->table = new_table;
 
     new_hash_table->table_capacity = initial_table_size / 2;
@@ -387,6 +375,7 @@ hash_table_t* hash_table_new(void) {
 //free a passed hash_table from memory.
 void hash_table_free(hash_table_t* h_table) {
 
+    //Make sure that the passed hash table actually exists.
     if (h_table == NULL) {
 
         fprintf(stderr, "Error. Attempting to free a NULL hash table.\n");
@@ -401,7 +390,7 @@ void hash_table_free(hash_table_t* h_table) {
 
         free(h_table);
 
-        fprintf(stderr, "Error. Hashtable is corrupt.");
+        fprintf(stderr, "Error. Hashtable is corrupt.\n");
 
         return;
     }

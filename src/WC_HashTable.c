@@ -311,7 +311,7 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
     size_t offset = 3;
     
     while (current_element != NULL && current_element != deleted) {
-        //printf("infinite loop?\n");
+
         //increment the table index by the offset required
         //for quadratic probing.
         table_index += offset;

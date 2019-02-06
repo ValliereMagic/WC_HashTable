@@ -13,11 +13,13 @@ int main(void) {
 
     char* key_two = "MSI";
 
-    char* value_two = "Micro$oft";
+    char* value_two = "Microsoft";
+
 
     char* key_three = "Purple";
 
     char* value_three = "oompaloompa";
+
 
     char* key_four = "power";
 
@@ -49,6 +51,7 @@ int main(void) {
 
     hash_table_add(new_table, value_four, strlen(value_four) + 1,
                    key_four, strlen(key_four) + 1);
+
 
     hash_table_free(new_table);
 

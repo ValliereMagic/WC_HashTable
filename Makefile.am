@@ -8,7 +8,7 @@ WCHT_tests_SOURCES = \
 #Tests CFlags
 
 #include folder for HashTable header and check all warnings
-WCHT_tests_CFLAGS = -I./src/ -Wall -Wextra
+WCHT_tests_CFLAGS = -I./src/ -Wall -Wextra -lm
 
 #Link tests to Hash table
 WCHT_tests_LDADD = libWC_HashTable.la

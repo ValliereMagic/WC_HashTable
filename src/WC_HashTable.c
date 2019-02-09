@@ -134,6 +134,143 @@ void free_element(table_element_t* element) {
     free(element);
 }
 
+//Returns 1 on equal, 0 otherwise.
+unsigned char is_equal(void* obj_one, size_t obj_one_length,
+                       void* obj_two, size_t obj_two_length) {
+    
+    //Make sure that passed parameters exist
+    if (obj_one == NULL || obj_two == NULL) {
+
+        fprintf(stderr, "Error. Either obj_one or obj_two "
+                        "is NULL in is_equal.\n");
+
+        return 0;
+    }
+
+    //Objects of different lengths
+    //cannot be equal.
+    if (obj_one_length != obj_two_length) {
+
+        return 0;
+    }
+
+    //check each byte of both objects, and check whether
+    //they are equal.
+    for (size_t i = 0; i < obj_one_length; i++) {
+
+        if (*(unsigned char*)obj_one != *(unsigned char*)obj_two) {
+
+            return 0;
+        }
+    }
+
+    //The elements must be equal then
+    return 1;
+}
+
+//Return the element that the key maps to,
+//and the index it is at in the passed size_t element_index pointer
+//
+//On failure, the returned element will be NULL, and the element_index
+//will be set to 0
+table_element_t* get_element(hash_table_t* h_table, void* key, size_t key_length,
+                             size_t* element_index) {
+
+    //Make sure that the parameters passed exist.
+    if (h_table == NULL || key == NULL || element_index == NULL) {
+
+        fprintf(stderr, "Error. either key, h_table, or element_index "
+                "passed to get_element is NULL.\n");
+
+        return NULL;
+    }
+
+    //Pull out relevant properties of hash table
+    size_t table_length = h_table->table_length;
+
+    table_element_t** table_elements = h_table->table;
+
+    table_element_t* deleted = &h_table->deleted;
+
+    //Make sure that pointer elements retrieved
+    //exist.
+    if (table_elements == NULL || deleted == NULL) {
+
+        fprintf(stderr, "Error. table element array or deleted is NULL in "
+                        "get_element when retrieving from h_table struct.\n");
+        
+        *element_index = 0;
+
+        return NULL;
+    }
+
+    //offset for quadratic probing
+    size_t offset = 1;
+
+    //Find the index where the element should be stored.
+    size_t search_start_index = hash(key, key_length) % table_length;
+
+    //Get the element that should be element to return
+    //(without considering collisions)
+    table_element_t* current = table_elements[search_start_index];
+
+    //There isn't an element stored at the key passed.
+    if (current == NULL) {
+
+        *element_index = 0;
+
+        return NULL;
+    }
+
+    //Look for current until NULL is reached. 
+    while (current != NULL) {
+
+        //Don't try to check against stepping
+        //stones.
+        if (current != deleted) {
+
+            void* current_key = current->key;
+
+            size_t current_key_length = current->key_length;
+
+            //Make sure that the
+            //key pulled out of current
+            //actually exists.
+            if (current_key == NULL) {
+
+                fprintf(stderr, "Error. A key retrieved from an element "
+                                "was NULL in get_element.\n");
+
+                *element_index = 0;
+
+                return NULL;
+            }
+
+            //Found the element.
+            if (is_equal(current_key, current_key_length, key, key_length)) {
+
+                *element_index = search_start_index;
+
+                return current;
+            }
+        }
+
+        //Jump to the next position for quadratic probing.
+        search_start_index = (search_start_index + offset) % table_length;
+
+        //Set current to the element stored there.
+        current = table_elements[search_start_index];
+
+        //Increment the offset for the next time around.
+        offset += 2;
+    }
+
+    //Didn't find the element
+    *element_index = 0;
+
+    return NULL;
+}
+
 //Calculate the next size of the hash table,
 //by first doubling the current size,
 //then finding the next prime.
@@ -444,8 +581,29 @@ unsigned char hash_table_remove(hash_table_t* h_table, void* key, size_t key_len
 }
 
 //returns the value stored at the key passed.
-//will return null if there is nothing stored at the key passed.
+//will return NULL if there is nothing stored at the key passed.
 void* hash_table_get(hash_table_t* h_table, void* key, size_t key_length) {
 
-    return NULL;
+    //Make sure that the parameters passed exist
+    if (h_table == NULL || key == NULL) {
+
+        fprintf(stderr, "Error. either NULL key or table passed to hash_table_get.\n");
+
+        return NULL;
+    }
+
+    //element index for passing to get_element
+    size_t element_index;
+
+    table_element_t* element = get_element(h_table, key, key_length, &element_index);
+
+    //If the element wasn't found.
+    if (element == NULL) {
+        
+        return NULL;
+    }
+
+    //TODO, make struct to return
+    //with length.
+    return element->value;
 }

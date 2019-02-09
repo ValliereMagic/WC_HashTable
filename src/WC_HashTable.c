@@ -180,7 +180,7 @@ table_element_t* get_element(hash_table_t* h_table, void* key, size_t key_length
     if (h_table == NULL || key == NULL || element_index == NULL) {
 
         fprintf(stderr, "Error. either key, h_table, or element_index "
-                "passed to get_element is NULL.\n");
+                        "passed to get_element is NULL.\n");
 
         return NULL;
     }

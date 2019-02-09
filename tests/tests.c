@@ -53,6 +53,11 @@ int main(void) {
                    key_four, strlen(key_four) + 1);
 
 
+    char* test_value = hash_table_get(new_table, key_one, strlen(key_one) + 1);
+
+    printf("Value of key %s: %s\n", key_one, test_value);
+
+    
     hash_table_free(new_table);
 
     printf("Done.\n");

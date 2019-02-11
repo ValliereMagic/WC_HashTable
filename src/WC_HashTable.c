@@ -578,7 +578,35 @@ unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length
 //returns 1 on success, 0 on failure.
 unsigned char hash_table_remove(hash_table_t* h_table, void* key, size_t key_length) {
 
-    return 0;
+    //Make sure that parameters passed exist.
+    if (h_table == NULL || key == NULL) {
+
+        fprintf(stderr, "Error. Either NULL h_table or NULL key passed to "
+                        "hash_table_remove.\n");
+
+        return 0;
+    }
+
+    //Get the element at the key passed.
+    size_t element_index;
+
+    table_element_t* element_to_remove = get_element(h_table, key, key_length, &element_index);
+
+    //Check if the get_element found
+    //the element at the key successfully.
+    if (element_to_remove == NULL) {
+
+        return 0;
+    }
+
+    //Set the element in h_table to deleted.
+    h_table->table[element_index] = &h_table->deleted;
+
+    //free the element
+    free_element(element_to_remove);
+
+    //element was removed successfully.
+    return 1;
 }
 
 //returns the value stored at the key passed.

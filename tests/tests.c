@@ -58,6 +58,15 @@ int main(void) {
     printf("Value of key %s: %s\n", key_one, (char*)test_value.value);
 
     
+    unsigned char remove_success = hash_table_remove(new_table, key_one, strlen(key_one) + 1);
+
+    printf("Remove successful? %d.\n", remove_success);
+    
+    test_value = hash_table_get(new_table, key_one, strlen(key_one) + 1);
+
+    printf("Value of key %s: %s\n", key_one, (char*)test_value.value);
+
+
     hash_table_free(new_table);
 
     printf("Done.\n");

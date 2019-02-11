@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "WC_HashTable.h"
 
 typedef struct table_element {
     
@@ -582,14 +583,21 @@ unsigned char hash_table_remove(hash_table_t* h_table, void* key, size_t key_len
 
 //returns the value stored at the key passed.
 //will return NULL if there is nothing stored at the key passed.
-void* hash_table_get(hash_table_t* h_table, void* key, size_t key_length) {
+hash_table_value_t hash_table_get(hash_table_t* h_table, void* key, size_t key_length) {
+    
+    //Initialize value_to_return
+    hash_table_value_t value_to_return;
+
+    value_to_return.value = NULL;
+
+    value_to_return.value_length = 0;
 
     //Make sure that the parameters passed exist
     if (h_table == NULL || key == NULL) {
 
         fprintf(stderr, "Error. either NULL key or table passed to hash_table_get.\n");
 
-        return NULL;
+        return value_to_return;
     }
 
     //element index for passing to get_element
@@ -600,10 +608,14 @@ void* hash_table_get(hash_table_t* h_table, void* key, size_t key_length) {
     //If the element wasn't found.
     if (element == NULL) {
         
-        return NULL;
+        return value_to_return;
     }
 
-    //TODO, make struct to return
-    //with length.
-    return element->value;
+    //Set the values in value_to_return to
+    //reflect the values in the element.
+    value_to_return.value = element->value;
+
+    value_to_return.value_length = element->value_length;
+
+    return value_to_return;
 }

@@ -2,6 +2,20 @@
 
     #define WC_HASH_TABLE_H
 
+    //Struct for returning values from the get function
+    //memory inside the returned value must not be modified.
+    //If data returned from get needs to be manipulated,
+    //it must be copied into other memory.
+    typedef struct hash_table_value {
+        
+        //Value returned
+        void* value;
+
+        //Number of bytes that value takes up
+        size_t value_length;
+    
+    } hash_table_value_t;
+
     //hash table type
     typedef struct hash_table hash_table_t;
 
@@ -27,6 +41,6 @@
 
     //returns the value stored at the key passed.
     //will return null if there is nothing stored at the key passed.
-    void* hash_table_get(hash_table_t* h_table, void* key, size_t key_length);
+    hash_table_value_t hash_table_get(hash_table_t* h_table, void* key, size_t key_length);
 
 #endif

@@ -256,7 +256,7 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         //This table holds the values currently stored in
         //the table, and are re-hashed and re-added
         //when the table is expanded to its new size.
-        table_element_t* temp_table[table_previous_length];
+        table_element_t** temp_table = malloc(sizeof(table_element_t*) * table_previous_length);
         //Copy all the values from the previous table
         //into the temporary table.
         memcpy(temp_table, prev_table, sizeof(table_element_t*) * table_previous_length);
@@ -286,6 +286,9 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
                 hash_table_add_element(h_table, current);
             }
         }
+
+        //Free the allocated temporary table
+        free(temp_table);
     }
     //Pull key and key_length out of the passed element.
     void* key = element->key;

@@ -286,7 +286,6 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
                 hash_table_add_element(h_table, current);
             }
         }
-
         //Free the allocated temporary table
         free(temp_table);
     }

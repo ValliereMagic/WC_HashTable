@@ -257,6 +257,11 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         //the table, and are re-hashed and re-added
         //when the table is expanded to its new size.
         table_element_t** temp_table = malloc(sizeof(table_element_t*) * table_previous_length);
+        //make sure the system is not out of memory and cannot allocate temp_table
+        if (temp_table == NULL) {
+            fprintf(stderr, "Error. System out of memory when trying to allocate temp_table in add_element.\n");
+            return 0;
+        }
         //Copy all the values from the previous table
         //into the temporary table.
         memcpy(temp_table, prev_table, sizeof(table_element_t*) * table_previous_length);

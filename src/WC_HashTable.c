@@ -435,6 +435,8 @@ unsigned char hash_table_remove(hash_table_t* h_table, void* key, size_t key_len
     h_table->table[element_index] = &h_table->deleted;
     //free the element
     free_element(element_to_remove);
+    //Update the count of stored items
+    h_table->elements_stored--;
     //element was removed successfully.
     return 1;
 }

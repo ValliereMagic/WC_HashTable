@@ -265,6 +265,7 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         //Make sure the reallocated table still exists.
         if (new_table == NULL) {
             fprintf(stderr, "Error. hash table is NULL after reallocating in add element.\n");
+            free(temp_table);
             return 0;
         }
         //Initialize all elements in the new table to NULL.

@@ -40,7 +40,7 @@ struct hash_table {
 /* Private HashTable functions*/
 
 //djb2 hash function
-size_t hash(unsigned char *str, size_t str_len) {
+static size_t hash(unsigned char *str, size_t str_len) {
     //Initial hash value
     size_t hash = 5381;
 
@@ -53,7 +53,7 @@ size_t hash(unsigned char *str, size_t str_len) {
 //allocates a new hash_table element.
 //Returns a allocated table element on success.
 //Returns NULL on failure.
-struct table_element* allocate_element(void* value, size_t value_length,
+static struct table_element* allocate_element(void* value, size_t value_length,
                                   void* key, size_t key_length) {
     //make sure that key and value exist.
     if (value == NULL || key == NULL) {
@@ -94,14 +94,14 @@ struct table_element* allocate_element(void* value, size_t value_length,
     return new_element;
 }
 
-void free_element(struct table_element* element) {
+static void free_element(struct table_element* element) {
     free(element->value);
     free(element->key);
     free(element);
 }
 
 //Returns 1 on equal, 0 otherwise.
-unsigned char is_equal(void* obj_one, size_t obj_one_length,
+static unsigned char is_equal(void* obj_one, size_t obj_one_length,
                        void* obj_two, size_t obj_two_length) {
     //Make sure that passed parameters exist
     if (obj_one == NULL || obj_two == NULL) {
@@ -131,7 +131,7 @@ unsigned char is_equal(void* obj_one, size_t obj_one_length,
 //
 //On failure, the returned element will be NULL, and the element_index
 //will be set to 0
-struct table_element* get_element(struct hash_table* h_table, void* key, size_t key_length,
+static struct table_element* get_element(struct hash_table* h_table, void* key, size_t key_length,
                              size_t* element_index) {
     //Make sure that the parameters passed exist.
     if (h_table == NULL || key == NULL || element_index == NULL) {
@@ -201,7 +201,7 @@ struct table_element* get_element(struct hash_table* h_table, void* key, size_t 
 //by first doubling the current size,
 //then finding the next prime.
 //Return 0 on failure.
-size_t find_next_table_length(size_t current_table_length) {
+static size_t find_next_table_length(size_t current_table_length) {
     //Calculate the new resized table length by doubling
     //the current length.
     size_t new_table_length = current_table_length * 2;
@@ -226,7 +226,7 @@ size_t find_next_table_length(size_t current_table_length) {
 }
 
 //Add the passed value 
-unsigned char hash_table_add_element(struct hash_table* h_table, struct table_element* element) {
+static unsigned char hash_table_add_element(struct hash_table* h_table, struct table_element* element) {
     //Make sure that the hash table passed actually exists.
     if (h_table == NULL) {
         fprintf(stderr, "Error. passed h_table doesn't exist in add.\n");

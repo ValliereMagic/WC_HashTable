@@ -4,7 +4,7 @@
 #include <string.h>
 #include "WC_HashTable.h"
 
-typedef struct table_element {
+struct table_element {
     //key the value is stored under.
     void* key;
     //number of bytes the key takes up.
@@ -13,14 +13,14 @@ typedef struct table_element {
     void* value;
     //number of bytes the value takes up.
     size_t value_length;
-} table_element_t;
+};
 
-typedef struct hash_table {
+struct hash_table {
     //takes up deleted spaces in
     //the hash table.
-    table_element_t deleted;
+    struct table_element deleted;
     //array of table elements
-    table_element_t** table;
+    struct table_element** table;
     //the current amount of elements
     //that the table can store at
     //it's current size.
@@ -35,7 +35,7 @@ typedef struct hash_table {
     //hash table. Must be less than or
     //equal to the table_capacity.
     size_t elements_stored;
-} hash_table_t;
+};
 
 /* Private HashTable functions*/
 
@@ -53,7 +53,7 @@ size_t hash(unsigned char *str, size_t str_len) {
 //allocates a new hash_table element.
 //Returns a allocated table element on success.
 //Returns NULL on failure.
-table_element_t* allocate_element(void* value, size_t value_length,
+struct table_element* allocate_element(void* value, size_t value_length,
                                   void* key, size_t key_length) {
     //make sure that key and value exist.
     if (value == NULL || key == NULL) {
@@ -61,7 +61,7 @@ table_element_t* allocate_element(void* value, size_t value_length,
         return NULL;
     }
     //Get the amount of memory required to store a table_element_t from the heap.
-    table_element_t* new_element = malloc(sizeof(table_element_t));
+    struct table_element* new_element = malloc(sizeof(struct table_element));
     //System out of memory.
     if (new_element == NULL) {
         fprintf(stderr, "Error. System out of memory.\n");
@@ -94,7 +94,7 @@ table_element_t* allocate_element(void* value, size_t value_length,
     return new_element;
 }
 
-void free_element(table_element_t* element) {
+void free_element(struct table_element* element) {
     free(element->value);
     free(element->key);
     free(element);
@@ -131,7 +131,7 @@ unsigned char is_equal(void* obj_one, size_t obj_one_length,
 //
 //On failure, the returned element will be NULL, and the element_index
 //will be set to 0
-table_element_t* get_element(hash_table_t* h_table, void* key, size_t key_length,
+struct table_element* get_element(struct hash_table* h_table, void* key, size_t key_length,
                              size_t* element_index) {
     //Make sure that the parameters passed exist.
     if (h_table == NULL || key == NULL || element_index == NULL) {
@@ -141,8 +141,8 @@ table_element_t* get_element(hash_table_t* h_table, void* key, size_t key_length
     }
     //Pull out relevant properties of hash table
     size_t table_length = h_table->table_length;
-    table_element_t** table_elements = h_table->table;
-    table_element_t* deleted = &h_table->deleted;
+    struct table_element** table_elements = h_table->table;
+    struct table_element* deleted = &h_table->deleted;
     //Make sure that pointer elements retrieved
     //exist.
     if (table_elements == NULL || deleted == NULL) {
@@ -157,7 +157,7 @@ table_element_t* get_element(hash_table_t* h_table, void* key, size_t key_length
     size_t search_start_index = hash(key, key_length) % table_length;
     //Get the element that should be element to return
     //(without considering collisions)
-    table_element_t* current = table_elements[search_start_index];
+    struct table_element* current = table_elements[search_start_index];
     //There isn't an element stored at the key passed.
     if (current == NULL) {
         *element_index = 0;
@@ -226,7 +226,7 @@ size_t find_next_table_length(size_t current_table_length) {
 }
 
 //Add the passed value 
-unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* element) {
+unsigned char hash_table_add_element(struct hash_table* h_table, struct table_element* element) {
     //Make sure that the hash table passed actually exists.
     if (h_table == NULL) {
         fprintf(stderr, "Error. passed h_table doesn't exist in add.\n");
@@ -247,7 +247,7 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         size_t next_table_length = find_next_table_length(table_previous_length);
         //Pull out the current table from h_table
         //to be resized.
-        table_element_t** prev_table = h_table->table;
+        struct table_element** prev_table = h_table->table;
         //make sure the previous table exists.
         if (prev_table == NULL) {
             fprintf(stderr, "Error. previous table on realloc is NULL.\n");
@@ -256,7 +256,7 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         //This table holds the values currently stored in
         //the table, and are re-hashed and re-added
         //when the table is expanded to its new size.
-        table_element_t** temp_table = malloc(sizeof(table_element_t*) * table_previous_length);
+        struct table_element** temp_table = malloc(sizeof(struct table_element*) * table_previous_length);
         //make sure the system is not out of memory and cannot allocate temp_table
         if (temp_table == NULL) {
             fprintf(stderr, "Error. System out of memory when trying to allocate temp_table in add_element.\n");
@@ -264,9 +264,9 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         }
         //Copy all the values from the previous table
         //into the temporary table.
-        memcpy(temp_table, prev_table, sizeof(table_element_t*) * table_previous_length);
+        memcpy(temp_table, prev_table, sizeof(struct table_element*) * table_previous_length);
         //reallocate the table to the new size.
-        table_element_t** new_table = h_table->table = realloc(prev_table, sizeof(table_element_t*) * next_table_length);
+        struct table_element** new_table = h_table->table = realloc(prev_table, sizeof(struct table_element*) * next_table_length);
         //Make sure the reallocated table still exists.
         if (new_table == NULL) {
             fprintf(stderr, "Error. hash table is NULL after reallocating in add element.\n");
@@ -283,10 +283,10 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
         h_table->elements_stored = 0;
         //Add back all of the elements stored away in
         //temp_table to the newly resized table.
-        table_element_t* deleted = &h_table->deleted;
+        struct table_element* deleted = &h_table->deleted;
         
         for (size_t i = 0; i < table_previous_length; i++) {
-            table_element_t* current = temp_table[i];
+            struct table_element* current = temp_table[i];
             
             if (current != deleted && current != NULL) {
                 hash_table_add_element(h_table, current);
@@ -313,11 +313,11 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
     //while resolving collisions.
     size_t wrapped_index = table_index;
     //retrieve the table from the h_table
-    table_element_t** table = h_table->table;
+    struct table_element** table = h_table->table;
     //retrieve deleted pointer from h_table
-    table_element_t* deleted = &h_table->deleted;
+    struct table_element* deleted = &h_table->deleted;
     //Quadratically probe until there is no collision
-    table_element_t* current_element = table[table_index];
+    struct table_element* current_element = table[table_index];
     size_t offset = 1;
     //Will only enter loop on a collision.
     while (current_element != NULL && current_element != deleted) {
@@ -342,15 +342,15 @@ unsigned char hash_table_add_element(hash_table_t* h_table, table_element_t* ele
 //Create a new hash table. Returns a
 //pointer to a new hash table on success.
 //Returns NULL on failure.
-hash_table_t* hash_table_new(void) {
+struct hash_table* hash_table_new(void) {
     const size_t initial_table_size = 13;
-    hash_table_t* new_hash_table = malloc(sizeof(hash_table_t));
+    struct hash_table* new_hash_table = malloc(sizeof(struct hash_table));
 
     if (new_hash_table == NULL) {
         fprintf(stderr, "Error. System out of memory.\n");
         return NULL;
     }
-    table_element_t** new_table = malloc(sizeof(table_element_t*) * initial_table_size);
+    struct table_element** new_table = malloc(sizeof(struct table_element*) * initial_table_size);
 
     if (new_table == NULL) {
         free(new_hash_table);
@@ -370,14 +370,14 @@ hash_table_t* hash_table_new(void) {
 }
 
 //free a passed hash_table from memory.
-void hash_table_free(hash_table_t* h_table) {
+void hash_table_free(struct hash_table* h_table) {
     //Make sure that the passed hash table actually exists.
     if (h_table == NULL) {
         fprintf(stderr, "Error. Attempting to free a NULL hash table.\n");
         return;
     }
     //pull the pointer to the start of the table out of h_table
-    table_element_t** table = h_table->table;
+    struct table_element** table = h_table->table;
 
     if (table == NULL) {
         free(h_table);
@@ -386,11 +386,11 @@ void hash_table_free(hash_table_t* h_table) {
     }
     //pull the memory address of the deleted dummy element
     //out of h_table.
-    table_element_t* deleted = &h_table->deleted;
+    struct table_element* deleted = &h_table->deleted;
     //go through each element in the hash table, and
     //free every used element (not deleted or NULL)
     for (size_t i = 0; i < h_table->table_length; i++) {
-        table_element_t* current = table[i];
+        struct table_element* current = table[i];
 
         if (current != deleted && current != NULL) {
             free_element(current);
@@ -410,10 +410,10 @@ void hash_table_free(hash_table_t* h_table) {
 //values and keys will be copied into memory managed by the
 //hash table.
 //function will return 1 on success, 0 on failure.
-unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length,
+unsigned char hash_table_add(struct hash_table* h_table, void* key, size_t key_length,
                              void* value, size_t value_length) {
     //create a new element containing the passed values.
-    table_element_t* new_element = allocate_element(value, value_length,
+    struct table_element* new_element = allocate_element(value, value_length,
                                                     key, key_length);
     //Use the private function to add the newly allocated element
     //into the hash table.
@@ -422,7 +422,7 @@ unsigned char hash_table_add(hash_table_t* h_table, void* key, size_t key_length
 
 //removes the value stored at the key passed in the hash table
 //returns 1 on success, 0 on failure.
-unsigned char hash_table_remove(hash_table_t* h_table, void* key, size_t key_length) {
+unsigned char hash_table_remove(struct hash_table* h_table, void* key, size_t key_length) {
     //Make sure that parameters passed exist.
     if (h_table == NULL || key == NULL) {
         fprintf(stderr, "Error. Either NULL h_table or NULL key passed to "
@@ -431,7 +431,7 @@ unsigned char hash_table_remove(hash_table_t* h_table, void* key, size_t key_len
     }
     //Get the element at the key passed.
     size_t element_index;
-    table_element_t* element_to_remove = get_element(h_table, key, key_length, &element_index);
+    struct table_element* element_to_remove = get_element(h_table, key, key_length, &element_index);
     //Check if the get_element found
     //the element at the key successfully.
     if (element_to_remove == NULL) {
@@ -449,9 +449,9 @@ unsigned char hash_table_remove(hash_table_t* h_table, void* key, size_t key_len
 
 //returns the value stored at the key passed.
 //will return NULL if there is nothing stored at the key passed.
-hash_table_value_t hash_table_get(hash_table_t* h_table, void* key, size_t key_length) {
+struct hash_table_value hash_table_get(struct hash_table* h_table, void* key, size_t key_length) {
     //Initialize value_to_return
-    hash_table_value_t value_to_return;
+    struct hash_table_value value_to_return;
     value_to_return.value = NULL;
     value_to_return.value_length = 0;
     //Make sure that the parameters passed exist
@@ -461,7 +461,7 @@ hash_table_value_t hash_table_get(hash_table_t* h_table, void* key, size_t key_l
     }
     //element index for passing to get_element
     size_t element_index;
-    table_element_t* element = get_element(h_table, key, key_length, &element_index);
+    struct table_element* element = get_element(h_table, key, key_length, &element_index);
     //If the element wasn't found.
     if (element == NULL) {
         return value_to_return;

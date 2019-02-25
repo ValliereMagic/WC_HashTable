@@ -4,7 +4,7 @@
 
 int main(void) {
 
-    hash_table_t* new_table = hash_table_new();
+    struct hash_table* new_table = hash_table_new();
 
     char* key_one = "Heil_Hydra";
     char* value_one = "COOHTMSTIP";
@@ -35,7 +35,7 @@ int main(void) {
     hash_table_add(new_table, value_four, strlen(value_four) + 1,
                    key_four, strlen(key_four) + 1);
 
-    hash_table_value_t test_value = hash_table_get(new_table, key_one, strlen(key_one) + 1);
+    struct hash_table_value test_value = hash_table_get(new_table, key_one, strlen(key_one) + 1);
     printf("Value of key %s: %s\n", key_one, (char*)test_value.value);
 
     unsigned char remove_success = hash_table_remove(new_table, key_one, strlen(key_one) + 1);

@@ -452,9 +452,15 @@ unsigned char hash_table_remove(struct hash_table* h_table, void* key, size_t ke
 
 //returns the value stored at the key passed.
 //will return NULL if there is nothing stored at the key passed.
-struct hash_table_value hash_table_get(struct hash_table* h_table, void* key, size_t key_length) {
+struct hash_table_key_value hash_table_get(struct hash_table* h_table, void* key, size_t key_length) {
     //Initialize value_to_return
-    struct hash_table_value value_to_return;
+    struct hash_table_key_value value_to_return;
+    //Initialize key and key length
+    //to sane defaults.
+    value_to_return.key = NULL;
+    value_to_return.key_length = 0;
+    //Initialize value and value length
+    //to sane defaults.
     value_to_return.value = NULL;
     value_to_return.value_length = 0;
     //Make sure that the parameters passed exist
@@ -469,6 +475,10 @@ struct hash_table_value hash_table_get(struct hash_table* h_table, void* key, si
     if (element == NULL) {
         return value_to_return;
     }
+    //Set the values passed into the key and 
+    //key length fields of value_to_return
+    value_to_return.key = key;
+    value_to_return.key_length = key_length;
     //Set the values in value_to_return to
     //reflect the values in the element.
     value_to_return.value = element->value;
@@ -484,4 +494,29 @@ size_t hash_table_size(struct hash_table* h_table) {
     }
     //Return the size stored in the hash table struct
     return h_table->elements_stored;
+}
+
+/*
+* (Key, Value) iterator
+*/
+struct hash_table_key_value_iterator {
+    //the current pair looking at
+    struct table_element* current;
+    //default new flag, to return
+    //the first value on the first
+    //call
+    unsigned char is_new;
+    //current iteration index
+    size_t current_index;
+    //end iteration index
+    size_t max_index;
+};
+
+/*
+* (Key, Value) iterator functions
+*/
+
+struct hash_table_key_value_iterator* hash_table_get_iterator(struct hash_table* h_table) {
+    //create a new iterator
+    return NULL;
 }

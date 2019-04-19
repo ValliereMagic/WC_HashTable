@@ -1,15 +1,21 @@
 #ifndef WC_HASH_TABLE_H
     #define WC_HASH_TABLE_H
-    //Struct for returning values from the get function
-    //memory inside the returned value must not be modified.
+    //Struct for returning key, value pairs from the get function.
+    //Memory inside the returned value must not be modified.
     //If data returned from get needs to be manipulated,
     //it must be copied into other memory.
-    struct hash_table_value {
+    struct hash_table_key_value {
+        //Key the value is stored under
+        const void* key;
+        //length in bytes that the key takes up
+        size_t key_length;
         //Value returned
-        void* value;
+        const void* value;
         //Number of bytes that value takes up
         size_t value_length;
     };
+    //iterator of (key, value) pairs
+    struct hash_table_key_value_iterator;
     //hash table type
     struct hash_table;
     //Create a new hash table. Returns a
@@ -30,7 +36,7 @@
     unsigned char hash_table_remove(struct hash_table* h_table, void* key, size_t key_length);
     //returns the value stored at the key passed.
     //will return null if there is nothing stored at the key passed.
-    struct hash_table_value hash_table_get(struct hash_table* h_table, void* key, size_t key_length);
+    struct hash_table_key_value hash_table_get(struct hash_table* h_table, void* key, size_t key_length);
     //returns the number of elements stored in the hash table
     size_t hash_table_size(struct hash_table* h_table);
 #endif

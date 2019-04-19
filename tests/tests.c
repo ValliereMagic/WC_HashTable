@@ -35,7 +35,7 @@ int main(void) {
     hash_table_add(new_table, value_four, strlen(value_four) + 1,
                    key_four, strlen(key_four) + 1);
 
-    struct hash_table_value test_value = hash_table_get(new_table, key_one, strlen(key_one) + 1);
+    struct hash_table_key_value test_value = hash_table_get(new_table, key_one, strlen(key_one) + 1);
     printf("Value of key %s: %s\n", key_one, (char*)test_value.value);
 
     //print out the size of the table (number of elements stored)

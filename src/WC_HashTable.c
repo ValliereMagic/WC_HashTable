@@ -218,6 +218,9 @@ static size_t find_next_table_length(size_t current_table_length) {
             if (new_table_length % i == 0) {
                 length_is_prime = 0;
                 new_table_length += 1;
+                //break out and see if new_table_length + 1
+                //is prime
+                break;
             }
         }
     } while (length_is_prime == 0);

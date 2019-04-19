@@ -38,11 +38,17 @@ int main(void) {
     struct hash_table_value test_value = hash_table_get(new_table, key_one, strlen(key_one) + 1);
     printf("Value of key %s: %s\n", key_one, (char*)test_value.value);
 
+    //print out the size of the table (number of elements stored)
+    printf("Size of the table: %I64d\n", hash_table_size(new_table));
+
     unsigned char remove_success = hash_table_remove(new_table, key_one, strlen(key_one) + 1);
     printf("Remove successful? %d.\n", remove_success);
     
     test_value = hash_table_get(new_table, key_one, strlen(key_one) + 1);
     printf("Value of key %s: %s\n", key_one, (char*)test_value.value);
+
+    //print out the size of the table (number of elements stored)
+    printf("Size of the table: %I64d\n", hash_table_size(new_table));
 
     hash_table_free(new_table);
     printf("Done.\n");

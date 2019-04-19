@@ -472,3 +472,13 @@ struct hash_table_value hash_table_get(struct hash_table* h_table, void* key, si
     value_to_return.value_length = element->value_length;
     return value_to_return;
 }
+
+//returns the number of elements stored in the hash table
+size_t hash_table_size(struct hash_table* h_table) {
+    //can't have any elements in it then
+    if (h_table == NULL) {
+        return 0;
+    }
+    //Return the size stored in the hash table struct
+    return h_table->elements_stored;
+}

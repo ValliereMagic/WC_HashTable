@@ -31,4 +31,6 @@
     //returns the value stored at the key passed.
     //will return null if there is nothing stored at the key passed.
     struct hash_table_value hash_table_get(struct hash_table* h_table, void* key, size_t key_length);
+    //returns the number of elements stored in the hash table
+    size_t hash_table_size(struct hash_table* h_table);
 #endif
